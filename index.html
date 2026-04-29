@@ -1,0 +1,1051 @@
+﻿﻿﻿﻿﻿﻿﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🌱 生态循环 — FOGO 养成</title>
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:100%;min-height:100%;font-family:'PingFang SC','Microsoft YaHei',-apple-system,sans-serif;background:transparent;overflow:auto}
+  #app{width:100%;min-height:100%;display:flex;flex-direction:column;background:#f4f1ec}
+
+  /* HEADER */
+  .header{background:linear-gradient(135deg,#2d6a4f,#40916c);padding:clamp(5px,1vw,10px) clamp(8px,1.5vw,16px);display:flex;align-items:center;gap:clamp(5px,1vw,10px);flex-shrink:0;border-bottom:2px solid #1b4332}
+  .header-icon{font-size:clamp(12px,2vw,20px)}
+  .header-title{font-size:clamp(9px,1.5vw,14px);font-weight:bold;color:#d8f3dc;flex:1}
+  .hstat{background:rgba(0,0,0,.2);border-radius:20px;padding:2px clamp(6px,1vw,10px);font-size:clamp(8px,1.2vw,12px);color:#fff;display:flex;align-items:center;gap:3px}
+  .hstat-val{color:#ffd700;font-weight:bold}
+
+  /* MAIN */
+  .main{flex:1;display:flex;flex-direction:column;padding:clamp(5px,.8vw,10px);gap:clamp(4px,.7vw,8px)}
+
+  /* ===== TWO BINS ===== */
+  .bins{display:flex;gap:clamp(5px,.8vw,10px);flex-shrink:0}
+  .bin{background:#fff;border-radius:clamp(10px,1.5vw,16px);padding:clamp(8px,1.2vw,14px);border:2px solid;display:flex;flex-direction:column;gap:clamp(5px,.8vw,9px)}
+  .bin-food{border-color:#c62828;width:42%;flex-shrink:0}
+  .bin-garden{border-color:#2e7d32;flex:1}
+
+  .bin-hd{display:flex;align-items:center;gap:clamp(4px,.6vw,7px);flex-wrap:wrap}
+  .bin-icon{font-size:clamp(16px,2.5vw,24px)}
+  .bin-name{font-size:clamp(9px,1.3vw,13px);font-weight:bold}
+  .bin-food .bin-name{color:#c62828}
+  .bin-garden .bin-name{color:#2e7d32}
+  .bin-size{font-size:clamp(8px,1vw,10px);color:#999;margin-left:auto}
+  .bin-desc{font-size:clamp(8px,1vw,10px);color:#aaa;line-height:1.4}
+  .bin-desc strong{color:#555}
+  .bin-desc .reward-tag{color:#e65100;font-weight:bold}
+  .freq-tag{background:#fffde7;border:1px solid #ffe082;border-radius:8px;padding:clamp(3px,.5vw,5px) clamp(5px,.8vw,8px);font-size:clamp(7px,1vw,9px);color:#f57f17;text-align:center;font-weight:bold}
+
+  /* ===== BIN VISUAL ===== */
+  .bin-visual{display:flex;flex-direction:column;align-items:center;gap:4px}
+
+  /* The trash bin container */
+  .bin-canvas-wrap{position:relative;width:clamp(60px,9vw,90px);height:clamp(65px,10vw,100px)}
+  .bin-body{position:absolute;bottom:0;left:0;right:0;height:75%;border-radius:0 0 8px 8px;border:2px solid;border-top:none;overflow:hidden;--bin-w:72px;--bin-h:72px}
+  .bin-food .bin-body{border-color:#c62828;background:#fff5f5}
+  .bin-garden .bin-body{border-color:#2e7d32;background:#f5fff5}
+  /* Trash items stacking - physical scatter */
+  .bin-item{font-size:clamp(14px,2vw,22px);animation:dropIn .5s ease-out;line-height:1;pointer-events:none;position:absolute}
+  /* Lid */
+  .bin-lid{position:absolute;top:0;left:0;right:0;height:22%;border-radius:6px 6px 2px 2px;border:2px solid;border-bottom:none;display:flex;align-items:center;justify-content:center}
+  .bin-food .bin-lid{border-color:#c62828;background:#ffcdd2}
+  .bin-garden .bin-lid{border-color:#2e7d32;background:#c8e6c9}
+  .bin-lid::after{content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:30%;height:45%;background:rgba(0,0,0,.15);border-radius:4px 4px 0 0}
+  .lid-fill{font-size:clamp(7px,1vw,9px);font-weight:bold;color:#555;text-align:center;line-height:1.2}
+
+  /* Overflow/pour animation */
+  .pour-flash{position:absolute;bottom:0;left:0;right:0;height:0;background:linear-gradient(to top,rgba(245,127,23,.6),transparent);border-radius:0 0 8px 8px;transition:height .6s ease;pointer-events:none}
+  .pour-flash.active{height:100%;animation:pourAnim 1s ease-out forwards}
+  @keyframes pourAnim{0%{height:100%;opacity:.8}100%{height:0%;opacity:0}}
+
+  /* Bin label */
+  .bin-fill-label{font-size:clamp(8px,1vw,10px);color:#999;margin-top:3px;text-align:center}
+  .bin-fill-label span{font-weight:bold}
+  .bin-food .bin-fill-label span{color:#c62828}
+  .bin-garden .bin-fill-label span{color:#2e7d32}
+
+  /* ===== COMPOST SOIL BAR ===== */
+  .soil-section{background:#fef9f0;border:1px solid #e8dcc8;border-radius:10px;padding:clamp(5px,.8vw,9px);display:flex;flex-direction:column;gap:clamp(5px,.7vw,8px)}
+  .soil-hd{display:flex;align-items:center;gap:clamp(4px,.6vw,8px)}
+  .soil-icon{font-size:clamp(12px,1.8vw,17px)}
+  .soil-title{font-size:clamp(8px,1.1vw,11px);font-weight:bold;color:#795548;flex:1}
+  .soil-meta{font-size:clamp(7px,1vw,9px);color:#999}
+
+  /* Soil track */
+  .soil-track{position:relative;height:clamp(28px,4.5vw,44px);background:#f5efe0;border:2px solid #c8b890;border-radius:12px;overflow:hidden;box-shadow:inset 0 2px 6px rgba(0,0,0,.12)}
+  /* Soil fill */
+  .soil-fill{position:absolute;top:0;left:0;height:100%;border-radius:10px;transition:width 1.2s cubic-bezier(.25,.46,.45,.94);min-width:0;overflow:hidden;z-index:1}
+  .soil-fill.f{background:linear-gradient(180deg,#8b5e3c 0%,#5d3a1a 40%,#4a2c12 100%)}
+  .soil-fill.g{background:linear-gradient(180deg,#6b8e5a 0%,#4a6b3a 40%,#3a5228 100%)}
+  .soil-fill.done{background:linear-gradient(180deg,#a0784a 0%,#7a5c2a 40%,#5a4018 100%)!important}
+  /* Soil texture overlay */
+  .soil-fill::before{content:'';position:absolute;inset:0;background-image:
+    radial-gradient(ellipse 3px 2px at 10% 20%,rgba(0,0,0,.15) 0%,transparent 100%),
+    radial-gradient(ellipse 2px 3px at 30% 60%,rgba(0,0,0,.12) 0%,transparent 100%),
+    radial-gradient(ellipse 4px 2px at 55% 30%,rgba(0,0,0,.1) 0%,transparent 100%),
+    radial-gradient(ellipse 2px 4px at 75% 70%,rgba(0,0,0,.13) 0%,transparent 100%),
+    radial-gradient(ellipse 3px 3px at 90% 40%,rgba(0,0,0,.11) 0%,transparent 100%),
+    radial-gradient(ellipse 2px 2px at 20% 80%,rgba(0,0,0,.14) 0%,transparent 100%),
+    radial-gradient(ellipse 5px 2px at 45% 15%,rgba(0,0,0,.09) 0%,transparent 100%),
+    radial-gradient(ellipse 3px 3px at 65% 85%,rgba(0,0,0,.12) 0%,transparent 100%),
+    radial-gradient(ellipse 2px 5px at 85% 10%,rgba(0,0,0,.1) 0%,transparent 100%),
+    radial-gradient(ellipse 4px 3px at 38% 50%,rgba(0,0,0,.08) 0%,transparent 100%);
+  background-size:60px 60px;pointer-events:none}
+  /* Soil top surface */
+  .soil-fill::after{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(180deg,rgba(255,255,255,.12),transparent);border-radius:10px 10px 0 0}
+  /* Worm container */
+  .worm-area{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:2;border-radius:10px}
+  /* Worm SVG */
+  .worm{position:absolute;pointer-events:none;z-index:3;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));animation:wormMove 0.6s ease-in-out infinite alternate}
+  @keyframes wormMove{0%{transform:translateX(0) scaleX(1)}25%{transform:translateX(4px) scaleX(1.04)}50%{transform:translateX(0) scaleX(1)}75%{transform:translateX(-4px) scaleX(1.04)}100%{transform:translateX(0) scaleX(1)}}
+@keyframes wormMoveR{0%{transform:translateX(0) scaleX(1)}25%{transform:translateX(-4px) scaleX(1.04)}50%{transform:translateX(0) scaleX(1)}75%{transform:translateX(4px) scaleX(1.04)}100%{transform:translateX(0) scaleX(1)}}
+  /* Percentage label */
+  .soil-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:4;pointer-events:none;font-size:clamp(7px,1vw,10px);font-weight:bold;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
+  .soil-fill.done ~ .soil-pct{color:#ffd700;text-shadow:0 1px 6px rgba(0,0,0,.8)}
+  /* Empty state */
+  .soil-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(7px,1vw,9px);color:#c8b890;z-index:5;pointer-events:none}
+
+  .c-btn{background:linear-gradient(135deg,#9e9e9e,#757575);color:#fff;border:none;border-radius:16px;padding:clamp(4px,.6vw,7px) clamp(8px,1.3vw,14px);font-size:clamp(8px,1.1vw,11px);font-weight:bold;cursor:not-allowed;transition:all .3s;width:100%}
+  .c-btn.active{background:linear-gradient(135deg,#f57f17,#e65100);cursor:pointer;animation:pulseBtn 1s infinite}
+  @keyframes pulseBtn{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(245,127,23,.4)}50%{transform:scale(1.02);box-shadow:0 0 0 4px rgba(245,127,23,0)}}
+  .c-btn:active{transform:scale(.96)}
+  .c-btn-msg{font-size:clamp(7px,1vw,9px);color:#bbb;text-align:center;margin-top:2px}
+
+  /* Item grid */
+  .item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(36px,4.5vw,52px),1fr));gap:clamp(3px,.5vw,5px)}
+  .item-btn{background:#f5f2ec;border:2px solid #ddd;border-radius:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(3px,.5vw,5px) 2px;font-size:clamp(12px,1.8vw,18px);transition:transform .15s,border-color .15s;min-width:0}
+  .bin-food .item-btn{background:#ffebee;border-color:#ffcdd2}
+  .bin-food .item-btn:hover{border-color:#ef5350;background:#fce4ec;transform:scale(1.08)}
+  .bin-garden .item-btn{background:#e8f5e9;border-color:#c8e6c9}
+  .bin-garden .item-btn:hover{border-color:#66bb6a;background:#f1f8e1;transform:scale(1.08)}
+  .item-btn:active{transform:scale(.88)}
+  .item-btn.used{opacity:.3;pointer-events:none}
+  .item-name{font-size:clamp(6px,.8vw,8px);color:#aaa;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center}
+
+  /* ===== GARDEN ===== */
+  .garden{background:#fff;border-radius:clamp(8px,1.2vw,14px);padding:clamp(5px,.8vw,9px) clamp(8px,1.2vw,12px);border:2px solid #e0d8cc;flex-shrink:0;display:flex;align-items:center;gap:clamp(8px,1.2vw,14px)}
+  .g-label{font-size:clamp(9px,1.2vw,12px);color:#888;font-weight:bold;white-space:nowrap;flex-shrink:0}
+  .g-plots{display:flex;gap:clamp(4px,.6vw,7px);flex:1;flex-wrap:wrap}
+  .gsp{flex:1;aspect-ratio:1;min-width:clamp(28px,3.5vw,44px);max-width:clamp(44px,5vw,60px);background:#f5f2ec;border:2px solid #d8d0c4;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(10px,1.5vw,18px);position:relative;cursor:default}
+  .gsp.growing{border-color:#a5d6a7;background:#e8f5e9}
+  .gsp.ready{border-color:#ffd700;background:#fffde7;animation:pg 1.5s infinite;cursor:pointer}
+  .gsp.empty{border-style:dashed;opacity:.5}
+  @keyframes pg{0%,100%{box-shadow:0 0 3px #ffd70060}50%{box-shadow:0 0 10px #ffd700}}
+  .gsp-n{font-size:clamp(6px,.8vw,8px);color:#2d6a4f;font-weight:bold}
+  .gsp-e{font-size:clamp(6px,.8vw,8px);color:#888}
+  .gsp.ready .gsp-e{color:#e65100;font-weight:bold}
+  .g-xp{font-size:clamp(8px,1.1vw,11px);color:#ffd700;white-space:nowrap;flex-shrink:0}
+
+  /* ===== REWARDS ===== */
+  .rewards{background:linear-gradient(135deg,#fff8e1,#fffde7);border-radius:clamp(10px,1.5vw,16px);padding:clamp(8px,1.2vw,14px);border:2px solid #e0d8cc;flex-shrink:0;display:flex;flex-direction:column;gap:clamp(6px,1vw,10px)}
+  .rew-hd{display:flex;align-items:center;gap:clamp(5px,.8vw,10px);flex-wrap:wrap}
+  .rew-icon{font-size:clamp(16px,2.2vw,22px)}
+  .rew-title{font-size:clamp(10px,1.4vw,13px);font-weight:bold;color:#795548;flex:1}
+  .rew-pts{background:#ffd700;border-radius:20px;padding:2px 10px;font-size:clamp(8px,1.1vw,11px);color:#5d4037;font-weight:bold}
+  .rew-pts span{color:#e65100}
+  .rew-tiers{display:flex;gap:clamp(4px,.6vw,7px);overflow-x:auto;padding-bottom:2px}
+  .tier{background:#fff;border:2px solid #e0d8cc;border-radius:10px;padding:clamp(5px,.8vw,8px);flex:1;min-width:clamp(80px,12vw,120px);display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .3s}
+  .tier.unlocked{border-color:#ffd700;background:#fffde7;box-shadow:0 0 8px #ffd70060}
+  .tier.current{border-color:#e65100;background:#fff3e0;animation:tierPulse 2s infinite}
+  .tier.locked{opacity:.5}
+  @keyframes tierPulse{0%,100%{box-shadow:0 0 0 0 rgba(230,81,0,.2)}50%{box-shadow:0 0 0 4px rgba(230,81,0,0)}}
+  .tier-badge{font-size:clamp(14px,2vw,20px)}
+  .tier-name{font-size:clamp(7px,1vw,9px);font-weight:bold;color:#555;text-align:center;line-height:1.2}
+  .tier-desc{font-size:clamp(6px,.8vw,8px);color:#999;text-align:center}
+  .tier-pts2{font-size:clamp(7px,.9vw,8px);color:#999}
+  .tier-pts2 span{color:#e65100;font-weight:bold}
+  .tier-status{font-size:clamp(6px,.8vw,8px);margin-top:2px}
+  .tier.unlocked .tier-status{color:#2d6a4f;font-weight:bold}
+  .tier.current .tier-status{color:#e65100;font-weight:bold}
+  .tier.locked .tier-status{color:#bbb}
+  .tier-btn{background:#ffd700;color:#5d4037;border:none;border-radius:10px;padding:clamp(3px,.5vw,5px) clamp(6px,.9vw,10px);font-size:clamp(7px,1vw,9px);font-weight:bold;cursor:pointer;transition:transform .15s;width:100%}
+  .tier-btn:hover{transform:scale(1.03)}
+  .tier-btn:active{transform:scale(.96)}
+  .tier-btn:disabled{background:#e0e0e0;color:#999;cursor:not-allowed}
+  .tier.unlocked .tier-btn{background:#2d6a4f;color:#fff;cursor:default}
+  .tier.current .tier-btn{background:#e65100;color:#fff;cursor:pointer;animation:btnPulse 1.5s infinite}
+  @keyframes btnPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+
+  /* ===== CLAIM MODAL ===== */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:clamp(10px,2vw,20px);display:none}
+  .modal-overlay.show{display:flex}
+  .modal{background:#fff;border-radius:clamp(12px,2vw,18px);padding:clamp(14px,2.5vw,24px);width:100%;max-width:clamp(300px,80vw,420px);max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;gap:clamp(10px,1.5vw,16px)}
+  .modal-hd{display:flex;align-items:center;gap:clamp(6px,1vw,10px);padding-bottom:clamp(8px,1.2vw,12px);border-bottom:2px solid #f0ebe4}
+  .modal-icon{font-size:clamp(20px,3vw,28px)}
+  .modal-title{font-size:clamp(12px,1.8vw,16px);font-weight:bold;color:#5d4037;flex:1}
+  .modal-close{background:none;border:none;font-size:clamp(14px,2vw,18px);cursor:pointer;padding:4px;color:#999}
+  .modal-body{display:flex;flex-direction:column;gap:clamp(8px,1.2vw,12px)}
+  .form-row{display:flex;flex-direction:column;gap:4px}
+  .form-label{font-size:clamp(9px,1.2vw,12px);color:#795548;font-weight:bold}
+  .form-input{background:#fef9f0;border:2px solid #e0d8cc;border-radius:10px;padding:clamp(6px,1vw,10px);font-size:clamp(9px,1.3vw,12px);color:#333;width:100%;font-family:inherit;transition:border-color .2s}
+  .form-input:focus{outline:none;border-color:#e65100}
+  .form-select{background:#fef9f0;border:2px solid #e0d8cc;border-radius:10px;padding:clamp(6px,1vw,10px);font-size:clamp(9px,1.3vw,12px);color:#333;width:100%;font-family:inherit;appearance:none;cursor:pointer}
+  .form-note{font-size:clamp(8px,1vw,10px);color:#aaa;line-height:1.4}
+  .modal-submit{background:linear-gradient(135deg,#e65100,#f57f17);color:#fff;border:none;border-radius:12px;padding:clamp(10px,1.5vw,14px);font-size:clamp(10px,1.4vw,13px);font-weight:bold;cursor:pointer;transition:transform .15s;width:100%}
+  .modal-submit:hover{transform:scale(1.02)}
+  /* Success / claim result */
+  .claim-result{display:none;flex-direction:column;align-items:center;gap:clamp(10px,1.5vw,16px);text-align:center;padding:clamp(12px,1.8vw,20px) 0}
+  .claim-result.show{display:flex}
+  .claim-success-card{background:linear-gradient(135deg,#e8f5e9,#f1f8e1);border:2px solid #66bb6a;border-radius:16px;padding:clamp(16px,2.5vw,24px) clamp(14px,2vw,22px);width:100%;display:flex;flex-direction:column;align-items:center;gap:clamp(8px,1.2vw,12px)}
+  .claim-big-emoji{font-size:clamp(36px,5vw,52px)}
+  .claim-label{font-size:clamp(10px,1.4vw,13px);color:#2d6a4f;font-weight:bold}
+  .claim-product{font-size:clamp(11px,1.6vw,14px);color:#333;font-weight:bold}
+  .claim-msg{font-size:clamp(9px,1.2vw,11px);color:#666;line-height:1.6;max-width:280px}
+  .claim-note{font-size:clamp(8px,1vw,9px);color:#aaa;text-align:center;line-height:1.5}
+  .claim-ok{background:#2d6a4f;color:#fff;border:none;border-radius:12px;padding:clamp(10px,1.5vw,14px) clamp(20px,3vw,30px);font-size:clamp(11px,1.5vw,13px);font-weight:bold;cursor:pointer;transition:transform .15s}
+  .claim-ok:hover{transform:scale(1.03)}
+
+  /* ===== TIP ===== */
+  .tip{background:#fff;border-radius:clamp(8px,1.2vw,14px);padding:clamp(4px,.7vw,8px) clamp(8px,1.2vw,12px);border:2px solid #e0d8cc;flex-shrink:0;display:flex;align-items:center;gap:5px;font-size:clamp(8px,1.1vw,10px);color:#666;line-height:1.4}
+  .tip-i{flex-shrink:0;font-size:clamp(10px,1.4vw,13px)}
+
+  /* TOAST */
+  .toast{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:99}
+  .tmsg{background:rgba(45,106,79,.95);color:#fff;font-weight:bold;font-size:clamp(10px,1.4vw,13px);padding:clamp(5px,.8vw,9px) clamp(14px,2vw,22px);border-radius:30px;animation:ta 1.8s forwards;white-space:nowrap}
+  @keyframes ta{0%{opacity:0;transform:scale(.7) translateY(8px)}15%{opacity:1;transform:scale(1) translateY(0)}75%{opacity:1;transform:scale(1) translateY(0)}100%{opacity:0;transform:scale(.9) translateY(-8px)}}
+
+  
+  .bag-stat{background:rgba(139,69,19,.35);border-radius:16px;padding:2px clamp(4px,.7vw,8px);font-size:clamp(7px,1vw,10px);color:#ffe0b2;display:flex;align-items:center;gap:3px}
+  .bag-quota{display:flex;align-items:center;justify-content:center;gap:clamp(4px,.6vw,8px);padding:clamp(3px,.5vw,6px) clamp(5px,.8vw,8px);border-radius:10px;font-size:clamp(7px,1vw,9px);font-weight:bold;margin-top:2px}
+  .bag-quota.ok{background:#e8f5e9;color:#2e7d32}
+  .bag-quota.warn{background:#fff3e0;color:#e65100}
+  .bag-quota.empty{background:#ffebee;color:#c62828}
+  .bag-anim-wrap{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:10;display:none}
+  .bag-anim-wrap.show{display:block}
+  .bag-anim{position:absolute;top:-100%;left:10%;right:10%;height:90%;background:linear-gradient(180deg,rgba(255,255,255,.0),rgba(255,255,255,.95) 30%);border-radius:0 0 6px 6px;border:1px dashed rgba(0,0,0,.2);animation:bagDrop .8s ease-in forwards}
+  .bag-anim::before{content:'🛍';position:absolute;top:2px;left:50%;transform:translateX(-50%);font-size:clamp(10px,1.4vw,14px)}
+  @keyframes bagDrop{0%{top:-100%;opacity:0}20%{top:-5%;opacity:1}60%{top:2%;opacity:1}100%{top:5%;opacity:0}}
+  .liner-layer{position:absolute;inset:2px;bottom:0;border-radius:0 0 6px 6px;opacity:0;pointer-events:none;transition:opacity .3s;z-index:5}
+  .liner-layer.show{opacity:1}
+  .bin-food .liner-layer{background:rgba(255,235,238,.6);border:2px dashed rgba(198,40,40,.3)}
+  .bin-garden .liner-layer{background:rgba(232,245,233,.6);border:2px dashed rgba(46,125,50,.3)}
+  .harvest-liner-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:300;flex-direction:column;gap:clamp(12px,2vw,20px)}
+  .harvest-liner-overlay.show{display:flex}
+  .liner-card{background:#fff;border-radius:clamp(14px,2vw,20px);padding:clamp(18px,3vw,28px);width:clamp(240px,70vw,340px);display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.5vw,16px);text-align:center}
+  .liner-anim-icon{font-size:clamp(48px,7vw,68px);animation:linerBounce .6s ease}
+  @keyframes linerBounce{0%{transform:scale(0) rotate(-15deg)}60%{transform:scale(1.2) rotate(5deg)}100%{transform:scale(1) rotate(0deg)}}
+  .liner-title{font-size:clamp(12px,1.8vw,16px);font-weight:bold;color:#5d4037}
+  .liner-desc{font-size:clamp(9px,1.2vw,12px);color:#888;line-height:1.6}
+  .liner-progress{width:100%;height:8px;background:#f0ebe4;border-radius:4px;overflow:hidden}
+  .liner-bar{height:100%;background:linear-gradient(90deg,#e65100,#f57f17);border-radius:4px;width:0;transition:width .1s linear}
+  .liner-note{font-size:clamp(8px,1vw,10px);color:#bbb}
+
+  @media(max-width:500px){.bins{flex-direction:column}.garden{flex-wrap:wrap}.g-plots{flex-wrap:nowrap}.rew-tiers{flex-wrap:nowrap}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Header -->
+  <div class="header">
+    <span class="header-icon">🌱</span>
+    <span class="header-title">生态循环 · FOGO养成</span>
+    <div class="hstat">📅 <strong id="dayLbl">第1天</strong></div>
+    <div class="hstat">🌟 <span class="hstat-val" id="xpLbl">0</span></div>
+    <div class="bag-stat">🛍 <span id="fBagHdr">15</span>/<span id="gBagHdr">5</span></div>
+    <div class="hstat" style="background:rgba(139,69,19,.3)">📦 波袋/月额</div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- ===== TWO BINS ===== -->
+    <div class="bins">
+
+      <!-- FOOD BIN -->
+      <div class="bin bin-food">
+        <div class="bin-hd">
+          <span class="bin-icon">🪣</span>
+          <span class="bin-name">Food Organics 厨余桶</span>
+          <span class="bin-size">🪑 室内·7-10L</span>
+        </div>
+        <div class="bin-desc">
+          <strong>桶小·每天产生</strong><br>
+          有机质密集·成熟快<br>
+          <span class="reward-tag">成熟 → 种 1 棵菜</span>
+        </div>
+        <div class="freq-tag">📅 每天可投放</div>
+
+        <!-- Bin visual with fill animation -->
+        <div class="bin-visual">
+          <div class="bin-canvas-wrap" id="fBinWrap">
+            <div class="bin-lid">
+              <div class="lid-fill" id="fLidLabel">空</div>
+            </div>
+            <div class="bin-body" id="fBinBody">
+              <div class="pour-flash" id="fPour"></div>
+              <div class="bag-anim-wrap" id="fBagAnim"><div class="bag-anim"></div></div>
+            </div>
+          </div>
+          <div class="bin-fill-label">桶 <span id="fBinPct">0%</span></div>
+        </div>
+
+        <div class="soil-section">
+          <div class="soil-hd">
+            <span class="soil-icon">🌱</span>
+            <span class="soil-title">堆肥土壤</span>
+            <span class="soil-meta" id="fMeta">等待中</span>
+          </div>
+          <div class="soil-track" id="fSoilTrack">
+            <div class="soil-fill f" id="mFoodFill" style="width:0%"></div>
+            <div class="worm-area" id="mFoodWorm"></div>
+            <div class="soil-pct" id="mFoodPct"></div>
+            <div class="soil-empty" id="fSoilEmpty">等待倒入厨余…</div>
+          </div>
+          <button class="c-btn" id="fHarvBtn" onclick="harvestFood()">🍳 收获厨余堆肥 → 种1棵</button>
+          <div class="c-btn-msg" id="fBtnMsg">桶满后自动堆肥</div>
+        </div>
+
+        <div class="item-grid" id="fGrid"></div>
+        <div class="bag-quota ok" id="fBagQuota">🛍 本月剩余 <strong id="fBagRem">15</strong> 袋</div>
+      </div>
+
+      <!-- GARDEN BIN -->
+      <div class="bin bin-garden">
+        <div class="bin-hd">
+          <span class="bin-icon">🗑️</span>
+          <span class="bin-name">Garden Organics 花园桶</span>
+          <span class="bin-size">🚛 户外·240L</span>
+        </div>
+        <div class="bin-desc">
+          <strong>桶大·每周积累</strong><br>
+          体积大·有机质稀·成熟慢<br>
+          <span class="reward-tag">成熟 → 种 2-3 棵菜</span>
+        </div>
+        <div class="freq-tag">🗓️ 慢慢积累</div>
+
+        <!-- Bin visual with fill animation -->
+        <div class="bin-visual">
+          <div class="bin-canvas-wrap" id="gBinWrap">
+            <div class="bin-lid">
+              <div class="lid-fill" id="gLidLabel">空</div>
+            </div>
+            <div class="bin-body" id="gBinBody">
+              <div class="pour-flash" id="gPour"></div>
+              <div class="bag-anim-wrap" id="gBagAnim"><div class="bag-anim"></div></div>
+            </div>
+          </div>
+          <div class="bin-fill-label">桶 <span id="gBinPct">0%</span></div>
+        </div>
+
+        <div class="soil-section">
+          <div class="soil-hd">
+            <span class="soil-icon">🌱</span>
+            <span class="soil-title">堆肥土壤</span>
+            <span class="soil-meta" id="gMeta">等待中</span>
+          </div>
+          <div class="soil-track" id="gSoilTrack">
+            <div class="soil-fill g" id="mGardenFill" style="width:0%"></div>
+            <div class="worm-area" id="mGardenWorm"></div>
+            <div class="soil-pct" id="mGardenPct"></div>
+            <div class="soil-empty" id="gSoilEmpty">等待倒入花园废弃物…</div>
+          </div>
+          <button class="c-btn" id="gHarvBtn" onclick="harvestGarden()">🌿 收获花园堆肥 → 种2-3棵</button>
+          <div class="c-btn-msg" id="gBtnMsg">桶满后自动堆肥</div>
+        </div>
+
+        <div class="item-grid" id="gGrid"></div>
+        <div class="bag-quota ok" id="gBagQuota">🛍 本月剩余 <strong id="gBagRem">5</strong> 袋</div>
+      </div>
+
+    </div>
+
+    <!-- ===== GARDEN ===== -->
+    <div class="garden">
+      <div class="g-label">🌻 我的花园</div>
+      <div class="g-plots" id="gPlots"></div>
+      <div class="g-xp">🌟 <span id="gXp">0</span></div>
+    </div>
+
+    <!-- ===== REWARDS ===== -->
+    <div class="rewards">
+      <div class="rew-hd">
+        <span class="rew-icon">🎁</span>
+        <span class="rew-title">🎁 我的奖励</span>
+        <div class="rew-pts">🌟 累计 <span id="rewPts">0</span> 积分</div>
+      </div>
+      <div class="rew-tiers" id="rewTiers"></div>
+    </div>
+
+    <!-- TIP -->
+    <div class="tip">
+      <span class="tip-i">💡</span>
+      <div id="tipTxt"></div>
+    </div>
+
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+</div>
+
+<!-- ===== CLAIM MODAL ===== -->
+<!-- Harvest liner animation overlay -->
+<div class="harvest-liner-overlay" id="linerOverlay">
+  <div class="liner-card">
+    <div class="liner-anim-icon" id="linerIcon">🛍</div>
+    <div class="liner-title" id="linerTitle">AS 5810 可堆肥内衬袋装入…</div>
+    <div class="liner-desc" id="linerDesc">AS 5810 认证家用堆肥内衬袋</div>
+    <div class="liner-progress"><div class="liner-bar" id="linerBar"></div></div>
+    <div class="liner-note" id="linerNote">🛍 厨余15袋/月 · 花园5袋/月 · 用完等下月</div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="claimModal">
+  <div class="modal">
+    <div class="modal-hd">
+      <span class="modal-icon">🧪</span>
+      <span class="modal-title">🧪 免费领取样品</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="claimForm">
+      <div class="form-row"><label class="form-label">您的姓名 / Your Name *</label><input class="form-input" type="text" id="fName" placeholder="请输入姓名" maxlength="50"></div>
+      <div class="form-row"><label class="form-label">邮箱 / Email *</label><input class="form-input" type="email" id="fEmail" placeholder="your@email.com" maxlength="80"></div>
+      <div class="form-row"><label class="form-label">电话 / Phone *</label><input class="form-input" type="tel" id="fPhone" placeholder="+61 xxx xxx xxx" maxlength="30"></div>
+      <div class="form-row"><label class="form-label">收货地址 / Shipping Address *</label><input class="form-input" type="text" id="fAddr" placeholder="Street, Suburb, State, Postcode" maxlength="120"></div>
+      <div class="form-row">
+        <label class="form-label">选择样品 / Select Sample</label>
+        <select class="form-select" id="fProduct">
+          <option value="dog">🐶 可降解狗屎袋 1卷（10个装）</option>
+          <option value="garbage">🗑️ 可降解垃圾袋 1卷（大号）</option>
+          <option value="apron">🍳 可降解围裙 1条</option>
+          <option value="bag">🛍️ 可降解购物袋 1个</option>
+        </select>
+      </div>
+      <div class="form-note">✅ 样品免费 · 填写信息后直接申领</div>
+      <button class="modal-submit" onclick="submitClaim()">🎁 确认领取免费样品</button>
+    </div>
+    <!-- 领取成功结果 -->
+    <div class="claim-result" id="claimResult">
+      <div class="claim-success-card">
+        <div class="claim-big-emoji" id="rEmoji">🎉</div>
+        <div class="claim-label">✅ 样品申领成功！</div>
+        <div class="claim-product" id="rProduct">—</div>
+        <div class="claim-msg">我们将通过邮件确认并安排发货<br>请留意邮箱通知</div>
+        <div class="claim-note">预计 5-10 个工作日送达<br>收货地址以表单填写为准</div>
+        <button class="claim-ok" onclick="closeModal()">太好了！🌱</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== BIN ITEM VISUALS =====
+const FOOD_EMOJIS=['🍊','🥬','🍌','☕','🍖','🍞','🥕','🍗','🌿','🍎','🥚','🌽','🍉','🥔','🍠','🧅','🍄','🫘'];
+const GARDEN_EMOJIS=['🍂','🌿','🌳','🌺','🌾','🍃','🪵','🌻','🍀','🌵','🌲','🪨'];
+
+function getRandomFoodEmoji(){return FOOD_EMOJIS[Math.floor(Math.random()*FOOD_EMOJIS.length)];}
+function getRandomGardenEmoji(){return GARDEN_EMOJIS[Math.floor(Math.random()*GARDEN_EMOJIS.length)];}
+
+let fItems=[], gItems=[]; // items currently in the bin
+let fLastBin=-1, gLastBin=-1; // track bin level changes
+
+function updateBinVisual(type){
+  const isFood=type==='f';
+  const bin=isFood?fBin:gBin;
+  const items=isFood?fItems:gItems;
+  const bodyId=isFood?'fBinBody':'gBinBody';
+  const pctId=isFood?'fBinPct':'gBinPct';
+  const lidId=isFood?'fLidLabel':'gLidLabel';
+  const pourId=isFood?'fPour':'gPour';
+
+  const body=document.getElementById(bodyId);
+  const pctEl=document.getElementById(pctId);
+  const lidEl=document.getElementById(lidId);
+  const pour=document.getElementById(pourId);
+  if(!body) return;
+
+  // Check if bin level changed (new item added)
+  const lastBin=isFood?fLastBin:gLastBin;
+  if(bin!==lastBin){
+    if(isFood) fLastBin=bin; else gLastBin=bin;
+
+    // Animate pour effect when bin level rises
+    if(bin>lastBin && bin<100){
+      pour.classList.remove('active');
+      void pour.offsetWidth; // reflow
+      pour.classList.add('active');
+      // Add one new item emoji
+      const emoji=isFood?getRandomFoodEmoji():getRandomGardenEmoji();
+      items.push(emoji);
+    }
+    // Reset when bin is emptied
+    if(bin===0){
+      items.length=0;
+    }
+  }
+
+  // Render items in bin (physical scatter, random position + tilt)
+  // Use CSS var bin dimensions for reliability
+  const bw=72, bh=72;
+  body.innerHTML='';
+
+  // Show dashed liner when bin has quota
+  const hasBag=(isFood && monthlyF>0) || (!isFood && monthlyG>0);
+  if(hasBag && bin>0){
+    const liner=document.createElement('div');
+    liner.className='liner-layer show';
+    body.appendChild(liner);
+  }
+  if(pour) body.appendChild(pour);
+  items.forEach((emoji,idx)=>{
+    const el=document.createElement('span');
+    el.className='bin-item';
+    el.textContent=emoji;
+    // Columns: 3 across the bin width
+    const colCount=3;
+    const col=idx%colCount;
+    const colW=bw/colCount;
+    const row=Math.floor(idx/colCount);
+    // X: random within column
+    const x=col*colW+Math.random()*colW*0.65+colW*0.05;
+    // Y: from bottom, items stack upward
+    const itemH=20;
+    const y=bh-10-row*itemH+Math.random()*8-4;
+    el.style.left=x+'px';
+    el.style.bottom=y+'px';
+    el.style.transform=`rotate(${(Math.random()-0.5)*28}deg) scale(${0.75+Math.random()*0.5})`;
+    el.style.animationDelay=(idx*0.05)+'s';
+    body.appendChild(el);
+  });
+
+  // Update lid label
+  if(bin===0){
+    lidEl.textContent='空';
+    lidEl.style.color='#999';
+  }else if(bin<30){
+    lidEl.textContent='轻';
+    lidEl.style.color='#888';
+  }else if(bin<60){
+    lidEl.textContent='半';
+    lidEl.style.color='#555';
+  }else if(bin<90){
+    lidEl.textContent='满';
+    lidEl.style.color='#e65100';
+  }else{
+    lidEl.textContent='溢!';
+    lidEl.style.color='#c62828';
+  }
+
+  // Update percentage text
+  pctEl.textContent=bin+'%';
+}
+
+// ===== REWARD TIERS =====
+const TIERS=[
+  {id:0,name:'🌱 环保新手',pts:50,desc:'可降解样品1份',badge:'🧪',productName:'可降解产品小样1份'},
+  {id:1,name:'🌿 分类达人',pts:200,desc:'可降解样品2份',badge:'🎁',productName:'可降解产品样品2份'},
+  {id:2,name:'🏡 堆肥高手',pts:500,desc:'样品 + 免运费',badge:'🚚',productName:'可降解样品 + 免运费'},
+  {id:3,name:'🌍 生态先锋',pts:1000,desc:'样品套装全组合',badge:'⭐',productName:'样品套装（全组合）'},
+  {id:4,name:'🌏 绿色冠军',pts:3000,desc:'年度样品套餐',badge:'🏆',productName:'年度样品套餐（按月寄送）'},
+];
+const PRODUCT_LABELS={'dog':'🐶 可降解狗屎袋 1卷（10个装）','garbage':'🗑️ 可降解垃圾袋 1卷（大号）','apron':'🍳 可降解围裙 1条','bag':'🛍️ 可降解购物袋 1个'};
+
+// ===== DATA =====
+const TIPS=[
+  'FOGO = Food Organics + Garden Organics，澳洲家庭必须分类投放！错误分类可能面临 $500+ 罚款。',
+  '厨余桶（Food）每天产生厨余垃圾，桶小容易满，成熟快（约2周），每次可种 1 棵菜。',
+  '花园桶（Garden）每周才收一次，桶大要慢慢积累，成熟慢（约3-4周），每次可种 2-3 棵菜。',
+  '两个桶完全独立！厨余好了就收厨余，花园好了就收花园，不用互相等。',
+  'AS 5810 认证：家用堆肥必须使用符合澳洲标准的可堆肥内衬袋！',
+  '套袋时机：收获后开始新一轮堆肥时（每轮只消耗1个袋额度）！',
+  '澳洲每年约 700 万吨食物被浪费，正确分类可大幅减少碳排放。',
+  '蚯蚓是堆肥好帮手！它们吃有机物、疏松土壤、排出的粪便是优质肥料。',
+  '每月额度用完？等下个月重置！🌙 合理规划投放频率',
+  '收获的堆肥可以种菜，厨余变沃土，形成完美的生态循环 🌿',
+];
+
+const FOODS_F=[
+  {e:'🍊',n:'橙皮'},{e:'🥬',n:'菜叶'},{e:'🍌',n:'香蕉皮'},
+  {e:'☕',n:'咖啡渣'},{e:'🍖',n:'骨头'},{e:'🍞',n:'面包'},
+  {e:'🥕',n:'萝卜'},{e:'🍗',n:'鸡骨'},{e:'🌿',n:'茶叶'},
+  {e:'🍎',n:'苹果'},{e:'🥚',n:'蛋壳'},{e:'🌽',n:'玉米'},
+  {e:'🍉',n:'瓜皮'},{e:'🥔',n:'土豆'},{e:'🍠',n:'红薯'},
+  {e:'🧅',n:'洋葱'},{e:'🍄',n:'蘑菇'},{e:'🫘',n:'豆渣'},
+];
+const FOODS_G=[
+  {e:'🍂',n:'落叶'},{e:'🌿',n:'草屑'},{e:'🌳',n:'树枝'},
+  {e:'🌺',n:'枯花'},{e:'🌾',n:'干草'},{e:'🍃',n:'碎叶'},
+  {e:'🪵',n:'木屑'},{e:'🌻',n:'枯茎'},{e:'🌺',n:'花瓣'},
+  {e:'🌵',n:'仙人掌'},{e:'🍀',n:'杂草'},{e:'🌲',n:'松针'},
+];
+const CROPS=[
+  {e:'🥬',n:'生菜'},{e:'🍅',n:'番茄'},{e:'🥕',n:'胡萝卜'},
+  {e:'🍆',n:'茄子'},{e:'🌽',n:'玉米'},{e:'🥒',n:'黄瓜'},
+  {e:'🍓',n:'草莓'},{e:'🌶️',n:'辣椒'},{e:'🥦',n:'西兰花'},
+];
+
+// ===== STATE =====
+let fBin=0,fMat=0,fActive=false,fDays=0;
+let gBin=0,gMat=0,gActive=false,gDays=0;
+let xp=0,day=1,hour=8,tipIdx=0;
+let garden=[];
+let usedF=0,usedG=0; // daily quota used (not Set of used indices)
+let claimedTiers=new Set();
+let currentClaimTier=0;
+const DAILY_FOOD_QUOTA=5; // Food桶每天最多投5次 (保留日配额用于测试)
+const DAILY_GARDEN_QUOTA=3; // Garden桶每天最多投3次
+
+// Monthly bag quota - CORE ANTI-CHEAT FEATURE
+const MONTHLY_FOOD_BAGS=15;   // Food桶每月15袋
+const MONTHLY_GARDEN_BAGS=5;  // Garden桶每月5袋
+let monthlyF=MONTHLY_FOOD_BAGS;
+let monthlyG=MONTHLY_GARDEN_BAGS;
+let currentMonth=new Date().getMonth()+1;
+let fAnimating=false, gAnimating=false;
+
+function checkMonthlyReset(){
+  const nowMonth=new Date().getMonth()+1;
+  if(nowMonth!==currentMonth){
+    currentMonth=nowMonth;
+    monthlyF=MONTHLY_FOOD_BAGS;
+    monthlyG=MONTHLY_GARDEN_BAGS;
+    showToast('📦 新月份！袋子额度已重置 — Food '+MONTHLY_FOOD_BAGS+'袋 · Garden '+MONTHLY_GARDEN_BAGS+'袋');
+  }
+}
+
+function showBagDropAnim(type, callback){
+  const wrapId=type==='f'?'fBagAnim':'gBagAnim';
+  const wrap=document.getElementById(wrapId);
+  if(!wrap){callback();return;}
+  wrap.classList.remove('active');
+  void wrap.offsetWidth;
+  wrap.classList.add('show');
+  setTimeout(function(){wrap.classList.remove('show');callback();},900);
+}
+
+function showHarvestLiner(type, callback){
+  var overlay=document.getElementById('linerOverlay');
+  document.getElementById('linerIcon').textContent=type==='f'?'🛍':'🗑';
+  document.getElementById('linerTitle').textContent=type==='f'?'AS 5810 可堆肥内衬袋装入厨余桶…':'AS 5810 可堆肥内衬袋装入花园桶…';
+  document.getElementById('linerDesc').textContent='AS 5810 认证家用堆肥袋 · 每月限量供应 · 额度用完等下月';
+  document.getElementById('linerNote').textContent='🛍 厨余15袋/月 · 花园5袋/月 · 用完等下月';
+  document.getElementById('linerBar').style.width='0%';
+  overlay.classList.add('show');
+  var prog=0;
+  var interval=setInterval(function(){
+    prog+=2;
+    document.getElementById('linerBar').style.width=prog+'%';
+    if(prog>=100){
+      clearInterval(interval);
+      setTimeout(function(){overlay.classList.remove('show');callback();},400);
+    }
+  },40);
+}
+
+function updateBagQuotaUI(){
+  document.getElementById('fBagHdr').textContent=monthlyF;
+  document.getElementById('gBagHdr').textContent=monthlyG;
+  var fQ=document.getElementById('fBagQuota');
+  var fR=document.getElementById('fBagRem');
+  if(fR)fR.textContent=monthlyF;
+  if(monthlyF===0)fQ.className='bag-quota empty';
+  else if(monthlyF<=3)fQ.className='bag-quota warn';
+  else fQ.className='bag-quota ok';
+  var gQ=document.getElementById('gBagQuota');
+  var gR=document.getElementById('gBagRem');
+  if(gR)gR.textContent=monthlyG;
+  if(monthlyG===0)gQ.className='bag-quota empty';
+  else if(monthlyG<=1)gQ.className='bag-quota warn';
+  else gQ.className='bag-quota ok';
+}
+
+// ===== INIT =====
+function init(){
+  const fG=document.getElementById('fGrid');
+  fG.innerHTML='';
+  FOODS_F.forEach((f,i)=>{
+    const b=document.createElement('button');
+    b.className='item-btn';
+    b.id='fb'+i;
+    b.innerHTML=`<span>${f.e}</span><span class="item-name">${f.n}</span>`;
+    b.onclick=()=>addF(i);
+    fG.appendChild(b);
+  });
+
+  const gG=document.getElementById('gGrid');
+  gG.innerHTML='';
+  FOODS_G.forEach((f,i)=>{
+    const b=document.createElement('button');
+    b.className='item-btn';
+    b.id='gb'+i;
+    b.innerHTML=`<span>${f.e}</span><span class="item-name">${f.n}</span>`;
+    b.onclick=()=>addG(i);
+    gG.appendChild(b);
+  });
+
+  const gp=document.getElementById('gPlots');
+  gp.innerHTML='';
+  for(let i=0;i<9;i++){
+    const d=document.createElement('div');
+    d.className='gsp empty';
+    d.id='gsp'+i;
+    d.innerHTML=`<span style="font-size:clamp(10px,1.5vw,16px)">🌱</span><span class="gsp-n">空</span><span class="gsp-e">—</span>`;
+    gp.appendChild(d);
+  }
+
+  renderTiers();
+  document.getElementById('tipTxt').textContent=TIPS[0];
+  update();
+}
+
+// ===== TIERS =====
+function renderTiers(){
+  const container=document.getElementById('rewTiers');
+  container.innerHTML='';
+  TIERS.forEach((t,i)=>{
+    const d=document.createElement('div');
+    d.className='tier';
+    d.id='tier'+i;
+    d.innerHTML=`
+      <span class="tier-badge">${t.badge}</span>
+      <span class="tier-name">${t.name}</span>
+      <span class="tier-desc">${t.desc}</span>
+      <span class="tier-pts2"><span>${t.pts}</span>积分</span>
+      <span class="tier-status" id='ts${i}'>${t.pts}积分解锁</span>
+      <button class="tier-btn" id='tc${i}' onclick="openClaim(${i})">${t.pts}积分解锁</button>
+    `;
+    container.appendChild(d);
+  });
+}
+
+function updateTiers(){
+  TIERS.forEach((t,i)=>{
+    const el=document.getElementById('tier'+i);
+    const btn=document.getElementById('tc'+i);
+    const statusEl=document.getElementById('ts'+i);
+    if(!el) return;
+    el.className='tier';
+    if(claimedTiers.has(i)){
+      el.classList.add('unlocked');
+      btn.textContent='✓ 已领取';btn.className='tier-btn';btn.disabled=true;
+      statusEl.textContent='✅ 已兑换';
+    }else if(xp>=t.pts){
+      el.classList.add('current');
+      btn.textContent='🎁 立即领取';btn.className='tier-btn';btn.disabled=false;
+      statusEl.textContent='✨ 可领取!';
+    }else{
+      el.classList.add('locked');
+      btn.textContent=t.pts+'积分解锁';btn.className='tier-btn';btn.disabled=true;
+      statusEl.textContent=(t.pts-xp)+'积分后解锁';
+    }
+  });
+  document.getElementById('rewPts').textContent=xp;
+}
+
+// ===== MODAL =====
+function openClaim(tierIdx){
+  const t=TIERS[tierIdx];
+  if(xp<t.pts || claimedTiers.has(tierIdx)) return;
+  currentClaimTier=tierIdx;
+  document.getElementById('fName').value='';
+  document.getElementById('fEmail').value='';
+  document.getElementById('fPhone').value='';
+  document.getElementById('fAddr').value='';
+  document.getElementById('fProduct').value='dog';
+  document.getElementById('claimForm').style.display='flex';
+  document.getElementById('claimResult').classList.remove('show');
+  document.getElementById('claimModal').classList.add('show');
+}
+function closeModal(){document.getElementById('claimModal').classList.remove('show');}
+
+function submitClaim(){
+  const name=document.getElementById('fName').value.trim();
+  const email=document.getElementById('fEmail').value.trim();
+  const phone=document.getElementById('fPhone').value.trim();
+  const addr=document.getElementById('fAddr').value.trim();
+  const product=document.getElementById('fProduct').value;
+  if(!name||!email||!phone||!addr){showToast('请填写完整信息');return;}
+  const productLabel=PRODUCT_LABELS[product]||PRODUCT_LABELS['dog'];
+  const emoji=product==='dog'?'🐶':product==='garbage'?'🗑️':product==='apron'?'🍳':'🛍️';
+  claimedTiers.add(currentClaimTier);
+  document.getElementById('claimForm').style.display='none';
+  document.getElementById('claimResult').classList.add('show');
+  document.getElementById('rEmoji').textContent=emoji;
+  document.getElementById('rProduct').textContent=productLabel;
+  updateTiers();
+  showToast('🎉 样品申领成功！');
+}
+
+// ===== WORMS (in soil) =====
+const WORM_COLORS=['#b87333','#8b6914','#a0522d','#c9a96e','#7a5230','#5c3a1e'];
+const WORM_MIN_SIZES={f:16,g:18};
+const WORM_MAX_SIZES={f:28,g:32};
+
+function spawnSoilWorm(fillId, wormId, type){
+  const fill=document.getElementById(fillId);
+  const wormLayer=document.getElementById(wormId);
+  if(!fill||!wormLayer) return;
+  const fw=fill.offsetWidth;
+  if(fw<20) return;
+
+  const minS=WORM_MIN_SIZES[type], maxS=WORM_MAX_SIZES[type];
+  const curCount=wormLayer.children.length;
+  if(curCount>=4) return; // max 4 worms
+
+  // Spawn 1-2 worms at a time, each with different Y position
+  const numToSpawn=curCount===0?2:1;
+  for(let wi=0;wi<numToSpawn;wi++){
+    const w2=minS+Math.random()*(maxS-minS);
+    const h2=4+Math.random()*4;
+    const color=WORM_COLORS[Math.floor(Math.random()*WORM_COLORS.length)];
+    const dur=(0.4+Math.random()*0.7).toFixed(2);
+    const svgNS='http://www.w3.org/2000/svg';
+    const svg=document.createElementNS(svgNS,'svg');
+    svg.setAttribute('class','worm');
+    svg.setAttribute('width',w2);
+    svg.setAttribute('height',h2);
+    svg.setAttribute('viewBox',`0 0 ${w2} ${h2}`);
+    // Random Y: different worms at different depths
+    const botPct=8+Math.random()*72;
+    // Random X start: spread across the soil width
+    const startX=fw*0.05+Math.random()*(fw*0.85);
+    // Random direction: left or right
+    const dir=Math.random()>0.45?1:-1;
+    svg.style.cssText=`bottom:${botPct}%;left:${startX}px;animation:wormMove${dir>0?'':'R'} ${dur}s ease-in-out infinite alternate;transform-origin:center center`;
+
+    // Body path
+    const path=document.createElementNS(svgNS,'path');
+    path.setAttribute('d',`M0,${h2/2} Q${w2*0.3},${h2*0.15} ${w2/2},${h2/2} Q${w2*0.7},${h2*0.85} ${w2},${h2/2}`);
+    path.setAttribute('stroke',color);
+    path.setAttribute('stroke-width',h2*0.75);
+    path.setAttribute('stroke-linecap','round');
+    path.setAttribute('fill','none');
+    // Wiggle
+    const atf=document.createElementNS(svgNS,'animateTransform');
+    atf.setAttribute('attributeName','transform');
+    atf.setAttribute('type','rotate');
+    atf.setAttribute('values',`0 ${w2/2} ${h2/2};10 ${w2/2} ${h2/2};0 ${w2/2} ${h2/2};-10 ${w2/2} ${h2/2};0 ${w2/2} ${h2/2}`);
+    atf.setAttribute('dur',dur+'s');
+    atf.setAttribute('repeatCount','indefinite');
+    path.appendChild(atf);
+
+    // Head
+    const head=document.createElementNS(svgNS,'circle');
+    head.setAttribute('cx',dir>0?w2:0);
+    head.setAttribute('cy',h2/2);
+    head.setAttribute('r',h2*0.52);
+    head.setAttribute('fill',color);
+    // Eye
+    const eye=document.createElementNS(svgNS,'circle');
+    eye.setAttribute('cx',dir>0?w2-1.5:h2*0.5+1.5);
+    eye.setAttribute('cy',h2/2-1);
+    eye.setAttribute('r',h2*0.18);
+    eye.setAttribute('fill','#1a0d05');
+
+    svg.appendChild(path);
+    svg.appendChild(head);
+    svg.appendChild(eye);
+    wormLayer.appendChild(svg);
+
+    // Move worm across
+    let x=startX;
+    const speed=(10+Math.random()*25)*(dir>0?1:-1);
+    let rafId;
+    const moveWorm=()=>{
+      if(!svg.parentElement){cancelAnimationFrame(rafId);return;}
+      x+=speed/60;
+      if(dir>0?x>fw+w2:x<-w2-w2){svg.remove();cancelAnimationFrame(rafId);return;}
+      svg.style.left=x+'px';
+      rafId=requestAnimationFrame(moveWorm);
+    };
+    rafId=requestAnimationFrame(moveWorm);
+  }
+}
+
+let wormTick=0;
+function updateWorms(){
+  wormTick++;
+  if(wormTick%4!==0) return; // update every ~12s worth of ticks
+  if(fMat>0 && Math.random()<fMat/80) spawnSoilWorm('mFoodFill','mFoodWorm','f');
+  if(gMat>0 && Math.random()<gMat/80) spawnSoilWorm('mGardenFill','mGardenWorm','g');
+}
+
+// ===== UPDATE =====
+function update(){
+  checkMonthlyReset();
+  // Bin visuals
+  updateBinVisual('f');
+  updateBinVisual('g');
+
+  // Food soil maturity
+  const fm=Math.min(fMat,100);
+  const mfEl=document.getElementById('mFoodFill');
+  const fEmpty=document.getElementById('fSoilEmpty');
+  const fPct=document.getElementById('mFoodPct');
+  mfEl.style.width=fm+'%';
+  mfEl.className='soil-fill f'+(fm>=100?' done':'');
+  fPct.textContent=fm>=100?'🌱 完成!':fm>0?fm+'%':'';
+  if(!fActive){fEmpty.style.display='flex';}else{fEmpty.style.display='none';}
+  document.getElementById('fMeta').textContent=!fActive?(fBin>=100?'满·倒入中…':'桶 '+fBin+'%'):(fm>=100?'✅完成!':'第'+fDays+'天');
+  const fBtn=document.getElementById('fHarvBtn');
+  const fMsg=document.getElementById('fBtnMsg');
+  if(fm>=100){
+    fBtn.className='c-btn active';fBtn.textContent='🍳 收获厨余堆肥!';
+    fMsg.textContent='✅ 厨余堆肥完成！点击收获！';fMsg.style.color='#e65100';
+  }else if(fActive){
+    fBtn.className='c-btn';fBtn.textContent='🍳 土壤 '+fm+'%';
+    fMsg.textContent='🌱 堆肥中，还需 '+(Math.ceil((100-fm)/8))+' 天';fMsg.style.color='#795548';
+  }else{
+    fBtn.className='c-btn';fBtn.textContent='🍳 厨余';
+    fMsg.textContent='桶满后倒入土壤堆肥';fMsg.style.color='#bbb';
+  }
+
+  // Garden soil maturity
+  const gm=Math.min(gMat,100);
+  const mgEl=document.getElementById('mGardenFill');
+  const gEmpty=document.getElementById('gSoilEmpty');
+  const gPct=document.getElementById('mGardenPct');
+  mgEl.style.width=gm+'%';
+  mgEl.className='soil-fill g'+(gm>=100?' done':'');
+  gPct.textContent=gm>=100?'🌱 完成!':gm>0?gm+'%':'';
+  if(!gActive){gEmpty.style.display='flex';}else{gEmpty.style.display='none';}
+  document.getElementById('gMeta').textContent=!gActive?(gBin>=100?'满·倒入中…':'桶 '+gBin+'%'):(gm>=100?'✅完成!':'第'+gDays+'天');
+  const gBtn=document.getElementById('gHarvBtn');
+  const gMsg=document.getElementById('gBtnMsg');
+  if(gm>=100){
+    gBtn.className='c-btn active';gBtn.textContent='🌿 收获花园堆肥!';
+    gMsg.textContent='✅ 花园堆肥完成！点击收获！';gMsg.style.color='#e65100';
+  }else if(gActive){
+    gBtn.className='c-btn';gBtn.textContent='🌿 土壤 '+gm+'%';
+    gMsg.textContent='🌱 堆肥中，还需 '+(Math.ceil((100-gm)/5))+' 天';gMsg.style.color='#795548';
+  }else{
+    gBtn.className='c-btn';gBtn.textContent='🌿 花园';
+    gMsg.textContent='桶满后倒入土壤堆肥';gMsg.style.color='#bbb';
+  }
+
+  document.getElementById('xpLbl').textContent=xp;
+  document.getElementById('dayLbl').textContent='第'+day+'天';
+  document.getElementById('gXp').textContent=xp;
+  updateTiers();
+  updateBagQuotaUI();
+
+  for(let i=0;i<9;i++){
+    const d=document.getElementById('gsp'+i);
+    if(i<garden.length){
+      const p=garden[i];
+      d.className='gsp '+(p.ready?'ready':'growing');
+      d.innerHTML=`<span style="font-size:clamp(10px,1.5vw,16px)">${p.ready?p.e:'🌱'}</span><span class="gsp-n">${p.n}</span><span class="gsp-e">${p.ready?'✅可收':(p.days-p.g)+'天'}</span>`;
+      if(p.ready) d.onclick=()=>harvestCrop(garden.indexOf(p));
+      else d.onclick=null;
+    }else{
+      d.className='gsp empty';
+      d.innerHTML=`<span style="font-size:clamp(10px,1.5vw,16px)">🌱</span><span class="gsp-n">空</span><span class="gsp-e">—</span>`;
+      d.onclick=null;
+    }
+  }
+}
+
+// ===== ACTIONS =====
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.innerHTML=`<div class="tmsg">${msg}</div>`;
+  setTimeout(()=>{t.innerHTML=''},2000);
+}
+
+function addF(idx){
+  // No bag needed to add items - bags only needed to START a new compost cycle
+  usedF++;
+  const wasActive=fActive;
+  fBin=Math.min(fBin+8,100);
+  if(fBin>=100 && !fActive){fActive=true;fMat=1;fDays=0;}
+  xp+=5;
+  const b=document.getElementById('fb'+idx);
+  if(b){b.style.transition='transform .1s';b.style.transform='scale(1.3)';setTimeout(function(){b.style.transform=''},200);}
+  if(!wasActive && fActive){
+    showToast(FOODS_F[idx].e+' 厨余桶满！🔥 开始堆肥！');
+  }else{
+    showToast(FOODS_F[idx].e+' \u2192 \U0001F9A3 +8%');
+  }
+  update();
+}
+
+function addG(idx){
+  // No bag needed to add items - bags only needed to START a new compost cycle
+  usedG++;
+  const wasActive=gActive;
+  gBin=Math.min(gBin+10,100);
+  if(gBin>=100 && !gActive){gActive=true;gMat=1;gDays=0;}
+  xp+=5;
+  const b=document.getElementById('gb'+idx);
+  if(b){b.style.transition='transform .1s';b.style.transform='scale(1.3)';setTimeout(function(){b.style.transform=''},200);}
+  if(!wasActive && gActive){
+    showToast(FOODS_G[idx].e+' 花园桶满！🔥 开始堆肥！');
+  }else{
+    showToast(FOODS_G[idx].e+' \u2192 \U0001F5D1 +10%');
+  }
+  update();
+}
+
+function harvestFood(){
+  if(fMat<100) return;
+  // ANTI-CHEAT: Need AS 5810 bag to start new cycle
+  if(monthlyF<=0){showToast('\U0001F6CD AS 5810 内衬袋用完了！\n厨余桶本月额度已耗尽\n\u2630 等下个月重置');return;}
+  // Bag animation at START of new compost cycle (after harvesting)
+  // This is the ONLY time a bag is needed
+  showHarvestLiner('f',function(){
+    monthlyF--;
+    xp+=60;
+    showToast('\U0001F373 厨余收获！+60积分，种1棵菜！\n\U0001F6CD 已套 AS 5810 内衬袋，新循环开始！');
+    const c=CROPS[Math.floor(Math.random()*CROPS.length)];
+    garden.push({e:c.e,n:c.n,g:0,days:2+Math.floor(Math.random()*3),ready:false});
+    fBin=0;fMat=0;fActive=false;fDays=0;
+    fItems=[];fLastBin=-1;
+    usedF=0;
+    document.getElementById('mFoodWorm').innerHTML='';
+    update();
+  });
+}
+
+function harvestGarden(){
+  if(gMat<100) return;
+  // ANTI-CHEAT: Need AS 5810 bag to start new cycle
+  if(monthlyG<=0){showToast('\U0001F6CD AS 5810 内衬袋用完了！\n花园桶本月额度已耗尽\n\u2630 等下个月重置');return;}
+  // Bag animation at START of new compost cycle (after harvesting)
+  // This is the ONLY time a bag is needed
+  showHarvestLiner('g',function(){
+    monthlyG--;
+    const num=1+(Math.random()<.7?1:2);
+    xp+=80+num*15;
+    showToast('\U0001F33F 花园收获！+'+(80+num*15)+'积分，种'+num+'棵菜！\n\U0001F6CD 已套 AS 5810 内衬袋，新循环开始！');
+    for(let i=0;i<num;i++){
+      const c=CROPS[Math.floor(Math.random()*CROPS.length)];
+      garden.push({e:c.e,n:c.n,g:0,days:2+Math.floor(Math.random()*3),ready:false});
+    }
+    gBin=0;gMat=0;gActive=false;gDays=0;
+    gItems=[];gLastBin=-1;
+    usedG=0;
+    document.getElementById('mGardenWorm').innerHTML='';
+    update();
+  });
+}
+
+function harvestCrop(idx){
+  const p=garden[idx];
+  xp+=30+p.days*8;
+  showToast(p.e+' '+p.n+'收获！+'+(30+p.days*8)+'积分');
+  garden.splice(idx,1);
+  update();
+}
+
+// ===== GAME LOOP =====
+function tick(){
+  checkMonthlyReset();
+  hour++;
+  if(hour>=24){hour=0;day++}
+  garden.forEach(p=>{if(!p.ready){p.g++;if(p.g>=p.days)p.ready=true}});
+  if(fActive && fMat<100){fMat=Math.min(fMat+8,100);fDays++;}
+  if(gActive && gMat<100){gMat=Math.min(gMat+5,100);gDays++;}
+  updateWorms();
+  update();
+}
+setInterval(tick,3000);
+
+init();
+</script>
+<!-- ===== VERSION BADGE ===== -->
+<div style="position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;background:linear-gradient(135deg,#43a047,#2e7d32);color:#fff;font-size:20px;font-weight:bold;padding:6px 28px;border-radius:30px;box-shadow:0 4px 16px rgba(0,0,0,.35);font-family:sans-serif;letter-spacing:2px;pointer-events:none">
+🌱 EcoCycle v1.5 <span style="font-size:12px;opacity:.85;margin-left:6px">AS5810内衬袋·仅新循环时套袋</span>
+</div>
+</body>
+</html>
